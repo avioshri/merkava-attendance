@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מעקב נוכחות - מרכבה</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>מעקב נוכחות מרכבה</h1>
+  <div class="header-actions">
+    <button class="btn-sync" onclick="syncFromMerkava()">משוך ממרכבה</button>
+    <button class="btn-sync" onclick="bulkSend()">שלח למרכבה</button>
+  </div>
+</header>
+<nav class="tabs">
+  <div class="tab active" onclick="showTab('dashboard')">לוח בקרה</div>
+  <div class="tab" onclick="showTab('entry')">הזנת נוכחות</div>
+  <div class="tab" onclick="showTab('history')">היסטוריה</div>
+  <div class="tab" onclick="showTab('settings')">הגדרות</div>
+</nav>
+<main class="container">
+  <section id="tab-dashboard">
+    <div class="emp-banner">
+      <div><div class="emp-name" id="dash-name">טוען...</div><div class="emp-sub" id="dash-id">מספר עובד: ---</div></div>
+      <div class="emp-type" id="dash-type">---</div>
+    </div>
+    <div class="quota-row">
+      <div class="quota-card blue"><div class="ql">שעות עבודה החודש</div><div class="qv" id="q-total">0:00</div><div class="qs" id="q-total-s">מתוך ---</div><div class="pb"><div class="pbf" id="q-total-b" style="background:#1a5fa8"></div></div></div>
+      <div class="quota-card orange"><div class="ql">שעות נוספות משרד</div><div class="qv" id="q-ot">0:00</div><div class="qs" id="q-ot-s">מכסה: ---</div><div class="pb"><div class="pbf" id="q-ot-b" style="background:#e67e22"></div></div></div>
+      <div class="quota-card green"><div class="ql">שעות נוספות מהבית</div><div class="qv" id="q-hot">0:00</div><div class="qs" id="q-hot-s">מכסה: ---</div><div class="pb"><div class="pbf" id="q-hot-b" style="background:#27ae60"></div></div></div>
+      <div class="quota-card purple"><div class="ql">השלמת תקן מהבית</div><div class="qv" id="q-comp">0:00</div><div class="qs">מתוך 8:00 שעות</div><div class="pb"><div class="pbf" id="q-comp-b" style="background:#8e44ad"></div></div></div>
+    </div>
+    <div class="card"><div class="card-title">התראות חודשיות</div><div id="alerts-box"><div class="muted">טוען...</div></div></div>
+    <div class="card"><div class="card-title">השבוע הנוכחי</div><div class="tbl-wrap"><table><thead><tr><th>יום</th><th>כניסה</th><th>יציאה</th><th>מהבית</th><th>תיאור עבודה מהבית</th><th>סה"כ</th><th>נוספות</th><th>סטטוס</th></tr></thead><tbody id="week-body"></tbody></table></div></div>
+  </section>
+  <section id="tab-entry" class="hidden">
+    <div class="card">
+      <div class="card-title">הזנת נוכחות יומית</div>
+      <div class="form-row">
+        <div class="fg"><label>תאריך</label><input type="date" id="e-date"></div>
+        <div class="fg"><label>סוג יום</label><select id="e-daytype" onchange="onDayTypeChange()"><option value="regular">נוכחות רגילה במשרד</option><option value="fullhome">יום עבודה מלא מהבית</option><option value="absence">היעדרות / חופשה</option></select></div>
+      </div>
+      <div id="f-regular"><div class="sec-label">נוכחות במשרד</div><div class="form-row"><div class="fg"><label>שעת כניסה</label><input type="time" id="e-in" onchange="liveCalc()"></div><div class="fg"><label>שעת יציאה</label><input type="time" id="e-out" onchange="liveCalc()"></div></div></div>
+      <div id="f-fullhome" class="hidden"><div class="sec-label">יום עבודה מהבית</div><div class="form-row"><div class="fg"><label>התחלה</label><input type="time" id="e-fh-s" onchange="liveCalc()"></div><div class="fg"><label>סיום</label><input type="time" id="e-fh-e" onchange="liveCalc()"></div></div><div class="fg full"><label>תיאור העבודה מהבית (חובה)</label><textarea id="e-fh-desc" rows="3" placeholder="תאר מה עשית: טלפונים, הכנת דוחות, ישיבות Zoom, מעקב הפקדות..."></textarea></div></div>
+      <div id="f-absence" class="hidden"><div class="sec-label">היעדרות</div><div class="fg"><label>סוג</label><select id="e-abs-type"><option value="vacation">חופשה</option><option value="sick">מחלה</option><option value="holiday">חג</option><option value="reserve">מילואים</option><option value="other">אחר</option></select></div></div>
+      <div id="f-home-extra"><div class="sec-label">עבודה מהבית (בנוסף למשרד)</div><div id="home-blocks"></div><button class="btn btn-outline" style="margin-top:8px" onclick="addHomeBlock()">הוסף בלוק עבודה מהבית</button></div>
+      <div id="calc-result" class="calc-box hidden"><div class="calc-title">חישוב יומי</div><div class="calc-grid"><div><div class="cl">שעות במשרד</div><div class="cv blue" id="cr-office">-</div></div><div><div class="cl">שעות מהבית</div><div class="cv green" id="cr-home">-</div></div><div><div class="cl">סה"כ שעות</div><div class="cv blue" id="cr-total">-</div></div><div><div class="cl">שעות נוספות</div><div class="cv orange" id="cr-ot">-</div></div><div><div class="cl">שנ מהבית</div><div class="cv green" id="cr-hot">-</div></div><div><div class="cl">השלמת תקן</div><div class="cv purple" id="cr-comp">-</div></div></div><div id="cr-alerts" style="margin-top:10px"></div></div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="liveCalc()">חשב</button><button class="btn btn-success" onclick="saveEntry()">שמור</button><button class="btn btn-warning" onclick="saveAndSend()">שמור ושלח למרכבה</button></div>
+    </div>
+    <div class="card"><div class="card-title">שליחה מרוכזת למרכבה</div><div class="form-row"><div class="fg"><label>מתאריך</label><input type="date" id="bulk-from"></div><div class="fg"><label>עד תאריך</label><input type="date" id="bulk-to"></div></div><div class="btn-row"><button class="btn btn-warning" onclick="bulkSend()">שלח הכל למרכבה</button><button class="btn btn-primary" onclick="syncFromMerkava()">משוך ממרכבה</button></div></div>
+  </section>
+  <section id="tab-history" class="hidden">
+    <div class="card"><div class="month-nav"><button onclick="changeMonth(-1)">קודם</button><h3 id="hist-month">---</h3><button onclick="changeMonth(1)">הבא</button></div><div class="tbl-wrap"><table><thead><tr><th>תאריך</th><th>כניסה</th><th>יציאה</th><th>שעות מהבית</th><th>תיאור מהבית</th><th>סה"כ</th><th>נוספות</th><th>סוג</th><th>סטטוס</th><th></th></tr></thead><tbody id="hist-body"></tbody></table></div><div class="hist-footer"><div id="hist-summary" class="muted"></div><button class="btn btn-outline" onclick="exportCSV()">ייצא CSV</button></div></div>
+  </section>
+  <section id="tab-settings" class="hidden">
+    <div class="card"><div class="card-title">פרטי עובד</div><div class="alert info">הנתונים מסונכרנים ממרכבה</div><div class="form-row"><div class="fg"><label>שם מלא</label><input type="text" id="s-name" style="direction:rtl;text-align:right"></div><div class="fg"><label>מספר עובד</label><input type="text" id="s-id"></div></div><div class="form-row"><div class="fg"><label>סוג משרה</label><select id="s-type" onchange="onEmpTypeChange()"><option value="regular">עובד רגיל (8 שעות)</option><option value="parent_u1">הורה - ילד עד שנה (7:30)</option><option value="parent_112">הורה - ילד 1-12 (7:35)</option></select></div><div class="fg"><label>מכסת שעות נוספות חודשית</label><input type="number" id="s-ot" value="15" step="0.5" min="0"></div></div><div id="parent-note" class="alert info hidden">כעובד משרת הורה: מחצית השעות הנוספות מהבית + עד 8 שעות השלמת תקן בחודש.</div></div>
+    <div class="card"><div class="card-title">הגדרות</div><div class="toggle-row"><span>סנכרון אוטומטי ממרכבה בפתיחה</span><label class="toggle"><input type="checkbox" id="s-auto-sync" checked><span class="tog-sl"></span></label></div><div class="toggle-row"><span>חובה למלא תיאור בעבודה מהבית</span><label class="toggle"><input type="checkbox" id="s-req-desc" checked><span class="tog-sl"></span></label></div><div class="toggle-row"><span>התראה כשמכסת שעות נוספות 80%</span><label class="toggle"><input type="checkbox" id="s-alert-ot" checked><span class="tog-sl"></span></label></div><div class="toggle-row"><span>התראה כשנגמרת מכסת השלמת תקן</span><label class="toggle"><input type="checkbox" id="s-alert-comp" checked><span class="tog-sl"></span></label></div><div class="fg" style="margin-top:12px"><label>כתובת שרת סנכרון</label><input type="text" id="s-server" value="http://localhost:3000" style="direction:ltr"></div></div>
+    <div class="card"><div class="card-title">גיבוי ושחזור</div><div class="btn-row"><button class="btn btn-success" onclick="saveSettings()">שמור הגדרות</button><button class="btn btn-outline" onclick="exportJSON()">ייצא JSON</button><button class="btn btn-outline" onclick="document.getElementById('imp-file').click()">ייבא JSON</button></div></div>
+  </section>
+</main>
+<div id="toasts"></div>
+<input type="file" id="imp-file" accept=".json" style="display:none" onchange="importJSON(event)">
+<script src="app.js"></script>
+</body>
+</html>
